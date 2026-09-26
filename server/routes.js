@@ -146,7 +146,13 @@ router.get('/users/:id', authenticate, (req, res) => {
 router.get('/ice-servers', authenticate, async (req, res) => {
   const iceServers = [{ urls: 'stun:stun.l.google.com:19302' }];
 
-  if (process.env.METERED_APP_NAME && process.env.METERED_API_KEY) {
+  if (process.env.TURN_URLS && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
+    iceServers.push({
+      urls: process.env.TURN_URLS.split(',').map((u) => u.trim()).filter(Boolean),
+      username: process.env.TURN_USERNAME,
+      credential: process.env.TURN_CREDENTIAL,
+    });
+  } else if (process.env.METERED_APP_NAME && process.env.METERED_API_KEY) {
     try {
       const r = await fetch(
         `https://${process.env.METERED_APP_NAME}.metered.live/api/v1/turn/credentials?apiKey=${process.env.METERED_API_KEY}`
