@@ -861,6 +861,14 @@ async function openSettings() {
 }
 
 $('#settingsBtn').addEventListener('click', openSettings);
+
+$('#logoutBtn').addEventListener('click', () => {
+  if (!confirm('Se déconnecter ?')) return;
+  Voice.leaveChannel();
+  state.socket?.disconnect();
+  localStorage.removeItem('webchat_token');
+  location.reload();
+});
 $('#closeSettings').addEventListener('click', () => $('#settingsModal').classList.add('hidden'));
 $('#saveSettings').addEventListener('click', async () => {
   const bio = $('#bioInput').value;
