@@ -4,6 +4,7 @@ const Plugins = (() => {
     { id: 'customTheme', name: 'Thème personnalisé', desc: "Importe un thème (fichier .css) depuis ton PC pour recolorer toute l'interface.", hasSettings: true },
     { id: 'cursorCat', name: 'Chat de bureau', desc: "Un petit chat qui suit ta souris partout sur l'écran.", hasSettings: false },
     { id: 'customFont', name: 'Police personnalisée', desc: "Choisis la police d'écriture de toute l'interface.", hasSettings: true },
+    { id: 'ambientScene', name: 'Bulles & Papillons', desc: "Des bulles et des papillons bleus et verts flottent doucement par-dessus toute l'interface.", hasSettings: false },
   ];
 
   const FONTS = [
@@ -17,7 +18,7 @@ const Plugins = (() => {
     { id: 'comic-neue', label: 'Comic Neue', family: "'Comic Neue', cursive", google: 'Comic+Neue:wght@400;700' },
   ];
 
-  const DEFAULT_ENABLED = { voiceTimer: true, customTheme: false, cursorCat: false, customFont: false };
+  const DEFAULT_ENABLED = { voiceTimer: true, customTheme: false, cursorCat: false, customFont: false, ambientScene: true };
 
   function loadState() {
     try { return JSON.parse(localStorage.getItem('webchat_plugins') || '{}'); }
@@ -35,6 +36,7 @@ const Plugins = (() => {
     if (id === 'cursorCat') (on ? startCat() : stopCat());
     if (id === 'customTheme') (on ? applyStoredTheme() : removeTheme());
     if (id === 'customFont') (on ? applyFont(state.fontId) : removeFont());
+    if (id === 'ambientScene') (on ? startAmbientScene() : stopAmbientScene());
   }
 
   /* ---- Cursor cat ---- */
@@ -126,10 +128,81 @@ const Plugins = (() => {
     if (isEnabled('customFont')) applyFont(fontId);
   }
 
+  /* ---- Ambient scene: bubbles & butterflies ---- */
+  let ambientContainer = null;
+  let bubbleTimer = null;
+  let butterflyTimer = null;
+
+  const BUTTERFLY_COLORS = {
+    blue: { dark: '#2563eb', light: '#60a5fa' },
+    green: { dark: '#16a34a', light: '#4ade80' },
+  };
+
+  function butterflySvg(color) {
+    const c = BUTTERFLY_COLORS[color];
+    return `<svg class="butterfly-svg" viewBox="0 0 60 44" width="34" height="25">
+      <g class="wing wing-l"><path d="M30,22 C14,2 -6,4 3,22 C-6,40 14,42 30,22 Z" fill="${c.light}" stroke="${c.dark}" stroke-width="1"/></g>
+      <g class="wing wing-r"><path d="M30,22 C46,2 66,4 57,22 C66,40 46,42 30,22 Z" fill="${c.light}" stroke="${c.dark}" stroke-width="1"/></g>
+      <ellipse cx="30" cy="22" rx="1.6" ry="9" fill="${c.dark}"/>
+    </svg>`;
+  }
+
+  function spawnBubble() {
+    if (!ambientContainer) return;
+    const size = 14 + Math.random() * 46;
+    const bubble = document.createElement('div');
+    bubble.className = 'ambient-bubble';
+    bubble.style.left = Math.random() * 100 + 'vw';
+    bubble.style.width = size + 'px';
+    bubble.style.height = size + 'px';
+    bubble.style.setProperty('--drift', (Math.random() * 160 - 80) + 'px');
+    const duration = 11 + Math.random() * 10;
+    bubble.style.animationDuration = duration + 's';
+    bubble.addEventListener('animationend', () => bubble.remove());
+    ambientContainer.appendChild(bubble);
+  }
+
+  function spawnButterfly() {
+    if (!ambientContainer) return;
+    const color = Math.random() < 0.5 ? 'blue' : 'green';
+    const fromLeft = Math.random() < 0.5;
+    const wrap = document.createElement('div');
+    wrap.className = `ambient-butterfly ${fromLeft ? 'from-left' : 'from-right'}`;
+    wrap.style.top = (8 + Math.random() * 65) + 'vh';
+    const duration = 15 + Math.random() * 9;
+    wrap.style.animationDuration = duration + 's';
+    wrap.innerHTML = butterflySvg(color);
+    wrap.addEventListener('animationend', (e) => {
+      if (e.target === wrap) wrap.remove();
+    });
+    ambientContainer.appendChild(wrap);
+  }
+
+  function startAmbientScene() {
+    if (ambientContainer) return;
+    ambientContainer = document.createElement('div');
+    ambientContainer.id = 'ambientScene';
+    document.body.appendChild(ambientContainer);
+    for (let i = 0; i < 5; i++) setTimeout(spawnBubble, i * 400);
+    setTimeout(spawnButterfly, 800);
+    bubbleTimer = setInterval(spawnBubble, 1900);
+    butterflyTimer = setInterval(spawnButterfly, 7000);
+  }
+
+  function stopAmbientScene() {
+    clearInterval(bubbleTimer);
+    clearInterval(butterflyTimer);
+    bubbleTimer = null;
+    butterflyTimer = null;
+    ambientContainer?.remove();
+    ambientContainer = null;
+  }
+
   function initOnLoad() {
     if (isEnabled('cursorCat')) startCat();
     if (isEnabled('customTheme')) applyStoredTheme();
     if (isEnabled('customFont')) applyFont(state.fontId);
+    if (isEnabled('ambientScene')) startAmbientScene();
   }
 
   return {

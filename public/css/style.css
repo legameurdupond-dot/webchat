@@ -641,6 +641,60 @@ textarea, input { font-family: inherit; }
   will-change: transform;
 }
 
+/* ---- Ambient scene: bubbles & butterflies ---- */
+#ambientScene {
+  position: fixed; inset: 0; overflow: hidden;
+  pointer-events: none; z-index: 5;
+}
+
+.ambient-bubble {
+  position: fixed; bottom: -70px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 28%, rgba(255,255,255,.65), rgba(196,181,253,.16) 55%, rgba(139,92,246,.05) 100%);
+  box-shadow: inset 0 0 10px rgba(255,255,255,.3), 0 0 10px rgba(139,92,246,.2);
+  animation-name: bubbleFloat;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes bubbleFloat {
+  0% { transform: translate(0, 0) scale(.7); opacity: 0; }
+  8% { opacity: .85; }
+  85% { opacity: .55; }
+  100% { transform: translate(var(--drift), -115vh) scale(1.05); opacity: 0; }
+}
+
+.ambient-butterfly {
+  position: fixed; left: -50px;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: forwards;
+  filter: drop-shadow(0 2px 5px rgba(139,92,246,.35));
+}
+.ambient-butterfly.from-left { animation-name: flyLeftToRight; }
+.ambient-butterfly.from-right { animation-name: flyRightToLeft; left: auto; right: -50px; }
+
+@keyframes flyLeftToRight {
+  0%   { left: -50px; transform: translateY(0) rotate(-6deg); }
+  20%  { transform: translateY(-36px) rotate(6deg); }
+  40%  { transform: translateY(12px) rotate(-8deg); }
+  60%  { transform: translateY(-28px) rotate(6deg); }
+  80%  { transform: translateY(14px) rotate(-4deg); }
+  100% { left: 105vw; transform: translateY(0) rotate(0deg); }
+}
+@keyframes flyRightToLeft {
+  0%   { right: -50px; transform: translateY(0) rotate(6deg) scaleX(-1); }
+  20%  { transform: translateY(-36px) rotate(-6deg) scaleX(-1); }
+  40%  { transform: translateY(12px) rotate(8deg) scaleX(-1); }
+  60%  { transform: translateY(-28px) rotate(-6deg) scaleX(-1); }
+  80%  { transform: translateY(14px) rotate(4deg) scaleX(-1); }
+  100% { right: 105vw; transform: translateY(0) rotate(0deg) scaleX(-1); }
+}
+
+.wing-l { transform-origin: 30px 22px; animation: flapWing .32s ease-in-out infinite; }
+.wing-r { transform-origin: 30px 22px; animation: flapWing .32s ease-in-out infinite; }
+@keyframes flapWing {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(.45); }
+}
+
 /* ---- Scrollbars ---- */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 4px; }
