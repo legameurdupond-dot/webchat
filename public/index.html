@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WebChat</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <h1>WebChat</h1>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Connexion</button>
+      <button class="auth-tab" data-tab="register">Inscription</button>
+    </div>
+    <form id="loginForm" class="auth-form">
+      <input type="text" id="loginUsername" placeholder="Pseudo" required autocomplete="username" />
+      <input type="password" id="loginPassword" placeholder="Mot de passe" required autocomplete="current-password" />
+      <button type="submit">Se connecter</button>
+      <p class="auth-error" id="loginError"></p>
+    </form>
+    <form id="registerForm" class="auth-form hidden">
+      <input type="text" id="registerUsername" placeholder="Pseudo (3 caractères min.)" required autocomplete="username" />
+      <input type="password" id="registerPassword" placeholder="Mot de passe (6 caractères min.)" required autocomplete="new-password" />
+      <button type="submit">Créer mon compte</button>
+      <p class="auth-error" id="registerError"></p>
+    </form>
+  </div>
+</div>
+
+<div id="appScreen" class="app-screen hidden">
+  <div class="servers-rail" id="serversRail"></div>
+
+  <div class="channels-panel">
+    <div class="server-header" id="serverName">Accueil</div>
+    <div class="channels-scroll">
+      <div class="channel-group-label">Salons textuels</div>
+      <ul class="channel-list" id="textChannels"></ul>
+      <div class="channel-group-label">Salons vocaux</div>
+      <ul class="channel-list" id="voiceChannels"></ul>
+    </div>
+    <div class="user-panel">
+      <div class="user-panel-avatar" id="selfAvatar"></div>
+      <div class="user-panel-info">
+        <div class="user-panel-name" id="selfUsername"></div>
+        <div class="status-picker" id="statusPicker">
+          <button class="status-picker-btn" id="statusPickerBtn" type="button">
+            <span class="status-dot-inline online" id="statusPickerDot"></span>
+            <span id="statusPickerLabel">En ligne</span>
+            <span class="status-picker-caret">▾</span>
+          </button>
+          <div class="status-picker-menu hidden" id="statusPickerMenu">
+            <button data-status="online" type="button"><span class="status-dot-inline online"></span>En ligne</button>
+            <button data-status="away" type="button"><span class="status-dot-inline away"></span>Absent</button>
+            <button data-status="dnd" type="button"><span class="status-dot-inline dnd"></span>Ne pas déranger</button>
+            <button data-status="invisible" type="button"><span class="status-dot-inline invisible"></span>Invisible</button>
+          </div>
+        </div>
+      </div>
+      <button id="settingsBtn" class="icon-btn" title="Paramètres">⚙️</button>
+    </div>
+  </div>
+
+  <div class="chat-panel">
+    <div class="chat-header">
+      <span id="channelHash">#</span>
+      <span id="channelName">general</span>
+      <div class="header-actions">
+        <input type="text" id="messageSearch" class="header-search" placeholder="Rechercher..." />
+        <button id="toggleMembersBtn" class="icon-btn" title="Membres">👥</button>
+      </div>
+    </div>
+    <div class="video-grid hidden" id="videoGrid"></div>
+    <div class="call-bar hidden" id="callBar">
+      <div class="call-participants" id="callParticipants"></div>
+      <span class="call-timer hidden" id="callTimer">00:00</span>
+      <div class="call-controls">
+        <button id="toggleMicBtn" class="call-btn" title="Micro">🎤</button>
+        <button id="toggleCamBtn" class="call-btn" title="Caméra">📷</button>
+        <button id="toggleScreenBtn" class="call-btn" title="Partager l'écran">🖥️</button>
+        <button id="leaveCallBtn" class="call-btn danger" title="Quitter l'appel">📞</button>
+      </div>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="typing-indicator" id="typingIndicator"></div>
+    <div class="reply-preview hidden" id="replyPreview">
+      <span id="replyPreviewText"></span>
+      <button id="cancelReply">✕</button>
+    </div>
+    <div class="message-input-bar">
+      <textarea id="messageInput" placeholder="Écrire un message..." rows="1"></textarea>
+      <button id="sendBtn" class="send-btn">➤</button>
+    </div>
+  </div>
+
+  <div class="members-panel">
+    <div class="group-label" id="onlineLabel">En ligne</div>
+    <ul class="member-list" id="onlineMembers"></ul>
+    <div class="group-label">Hors ligne</div>
+    <ul class="member-list" id="offlineMembers"></ul>
+  </div>
+</div>
+
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-card settings-card">
+    <div class="settings-tabs">
+      <button class="settings-tab active" data-tab="profile">Profil</button>
+      <button class="settings-tab" data-tab="voice">Voix &amp; Vidéo</button>
+      <button class="settings-tab" data-tab="plugins">Plugins</button>
+    </div>
+
+    <div class="settings-pane" id="paneProfile">
+      <div class="profile-editor">
+        <div class="profile-banner" id="profileBanner">
+          <button class="profile-banner-edit" id="editBannerBtn" type="button">🖼️ Changer la bannière</button>
+        </div>
+        <div class="profile-avatar-row">
+          <div class="profile-avatar-preview" id="profileAvatarPreview">
+            <button class="profile-avatar-edit" id="editAvatarBtn" type="button" title="Changer la photo">📷</button>
+          </div>
+          <div class="profile-preview-name" id="profilePreviewName"></div>
+        </div>
+      </div>
+      <label>Bio</label>
+      <textarea id="bioInput" rows="3" maxlength="200"></textarea>
+    </div>
+
+    <div class="settings-pane hidden" id="paneVoice">
+      <label>Micro</label>
+      <select id="micSelect" class="device-select"></select>
+
+      <label>Haut-parleur</label>
+      <select id="speakerSelect" class="device-select"></select>
+
+      <label>Caméra</label>
+      <select id="camSelect" class="device-select"></select>
+
+      <label>Résolution caméra</label>
+      <div class="segmented" id="camResSegment">
+        <button data-value="720p" type="button">720p</button>
+        <button data-value="1080p" type="button">1080p</button>
+      </div>
+
+      <label>FPS partage d'écran</label>
+      <div class="segmented" id="screenFpsSegment">
+        <button data-value="30" type="button">30 fps</button>
+        <button data-value="60" type="button">60 fps</button>
+      </div>
+    </div>
+
+    <div class="settings-pane hidden" id="panePlugins">
+      <div class="plugins-grid" id="pluginsGrid"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button id="closeSettings">Annuler</button>
+      <button id="saveSettings" class="primary">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="emojiPicker" class="emoji-picker hidden"></div>
+<div id="audioPool" class="audio-pool"></div>
+
+<input type="file" id="avatarFileInput" accept="image/png,image/jpeg,image/gif,image/webp" class="hidden" />
+<input type="file" id="bannerFileInput" accept="image/png,image/jpeg,image/gif,image/webp" class="hidden" />
+<input type="file" id="themeFileInput" accept=".css,text/css" class="hidden" />
+
+<div id="profileCardModal" class="modal hidden">
+  <div class="modal-card profile-card-modal">
+    <button class="profile-card-close" id="closeProfileCard" type="button">✕</button>
+    <div class="profile-banner" id="pcBanner"></div>
+    <div class="profile-avatar-row">
+      <div class="profile-avatar-preview" id="pcAvatarWrap"></div>
+    </div>
+    <div class="profile-card-body">
+      <div class="profile-card-name" id="pcName"></div>
+      <div class="profile-card-status" id="pcStatus"></div>
+      <div class="profile-card-voice hidden" id="pcVoice">
+        <div>
+          <div class="pcv-label">🔊 Dans un salon vocal</div>
+          <div class="pcv-channel" id="pcVoiceChannel"></div>
+        </div>
+        <button id="pcJoinVoice" class="primary" type="button">Rejoindre</button>
+      </div>
+      <div class="profile-card-bio" id="pcBio"></div>
+      <div class="profile-card-meta" id="pcMeta"></div>
+    </div>
+  </div>
+</div>
+
+<div id="giphyModal" class="modal hidden">
+  <div class="modal-card giphy-card">
+    <input type="text" id="giphySearch" class="header-search giphy-search" placeholder="Rechercher un GIF sur Giphy..." />
+    <div id="giphyResults" class="giphy-grid"></div>
+    <div class="modal-actions">
+      <button id="closeGiphy">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/voice.js"></script>
+<script src="/js/plugins.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
