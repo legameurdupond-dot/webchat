@@ -1,17 +1,17 @@
 :root {
-  --bg-app: #131022;
-  --bg-rail: #191530;
-  --bg-panel: #1e1a37;
-  --bg-chat: #221d3f;
-  --bg-members: #1e1a37;
-  --bg-input: #2a2450;
-  --bg-hover: #322a5c;
-  --text-normal: #ddd9f5;
-  --text-muted: #9a92c4;
+  --bg-app: #0b1a23;
+  --bg-rail: #0e2130;
+  --bg-panel: #122938;
+  --bg-chat: #15303f;
+  --bg-members: #122938;
+  --bg-input: #1a3a49;
+  --bg-hover: #20495a;
+  --text-normal: #dcedf2;
+  --text-muted: #83a8b5;
   --text-header: #ffffff;
-  --accent: #8b5cf6;
-  --accent-2: #ec4899;
-  --accent-hover: #7c4fe0;
+  --accent: #2196f3;
+  --accent-2: #22c55e;
+  --accent-hover: #1a86e0;
   --gradient: linear-gradient(135deg, var(--accent), var(--accent-2));
   --green: #23c980;
   --yellow: #f0b232;
@@ -40,7 +40,7 @@ textarea, input { font-family: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at top, #23252b, #16171a);
+  background: radial-gradient(circle at top, #16222a, #0a1219);
 }
 .auth-card {
   background: var(--bg-panel);
@@ -106,7 +106,7 @@ textarea, input { font-family: inherit; }
   transition: border-radius .15s, background .15s, transform .15s;
 }
 .server-icon:hover { border-radius: 16px; transform: translateY(-1px); }
-.server-icon.active { border-radius: 16px; background: var(--gradient); color: #fff; box-shadow: 0 4px 14px rgba(139,92,246,.45); }
+.server-icon.active { border-radius: 16px; background: var(--gradient); color: #fff; box-shadow: 0 4px 14px rgba(33,150,243,.45); }
 
 .channels-panel {
   width: 240px;
@@ -141,7 +141,7 @@ textarea, input { font-family: inherit; }
   transition: background .12s, color .12s, transform .1s;
 }
 .channel-item:hover { background: var(--bg-hover); color: var(--text-normal); }
-.channel-item.active { background: var(--gradient); color: #fff; box-shadow: 0 4px 12px rgba(139,92,246,.35); }
+.channel-item.active { background: var(--gradient); color: #fff; box-shadow: 0 4px 12px rgba(33,150,243,.35); }
 
 .user-panel {
   height: 60px;
@@ -236,7 +236,7 @@ textarea, input { font-family: inherit; }
   position: relative;
 }
 @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-.message-row:hover { background: rgba(139,92,246,0.06); }
+.message-row:hover { background: rgba(33,150,243,0.06); }
 .message-row .avatar { margin-top: 2px; }
 .message-body { flex: 1; min-width: 0; }
 .message-header { display: flex; align-items: baseline; gap: 8px; }
@@ -438,7 +438,7 @@ textarea, input { font-family: inherit; }
 .profile-card-meta { font-size: 11px; color: var(--text-muted); margin-top: 12px; text-transform: uppercase; font-weight: 700; }
 .profile-card-voice {
   margin-top: 12px; padding: 10px 12px; border-radius: 10px;
-  background: rgba(139,92,246,.12); box-shadow: inset 0 0 0 1px rgba(139,92,246,.3);
+  background: rgba(33,150,243,.12); box-shadow: inset 0 0 0 1px rgba(33,150,243,.3);
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
 .pcv-label { font-size: 11px; color: var(--accent); font-weight: 700; text-transform: uppercase; }
@@ -561,7 +561,7 @@ textarea, input { font-family: inherit; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  box-shadow: 0 0 0 1px rgba(139,92,246,.25), 0 8px 24px rgba(0,0,0,.3);
+  box-shadow: 0 0 0 1px rgba(33,150,243,.25), 0 8px 24px rgba(0,0,0,.3);
 }
 .call-timer {
   font-size: 12px; font-weight: 700; color: var(--text-muted);
@@ -649,8 +649,8 @@ textarea, input { font-family: inherit; }
 
 .ambient-bubble {
   position: fixed; bottom: -70px; border-radius: 50%;
-  background: radial-gradient(circle at 30% 28%, rgba(255,255,255,.65), rgba(196,181,253,.16) 55%, rgba(139,92,246,.05) 100%);
-  box-shadow: inset 0 0 10px rgba(255,255,255,.3), 0 0 10px rgba(139,92,246,.2);
+  background: radial-gradient(circle at 30% 28%, rgba(255,255,255,.65), rgba(134,239,222,.16) 55%, rgba(33,150,243,.05) 100%);
+  box-shadow: inset 0 0 10px rgba(255,255,255,.3), 0 0 10px rgba(33,150,243,.25);
   animation-name: bubbleFloat;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
@@ -666,7 +666,7 @@ textarea, input { font-family: inherit; }
   position: fixed; left: -50px;
   animation-timing-function: ease-in-out;
   animation-fill-mode: forwards;
-  filter: drop-shadow(0 2px 5px rgba(139,92,246,.35));
+  filter: drop-shadow(0 2px 5px rgba(33,150,243,.35));
 }
 .ambient-butterfly.from-left { animation-name: flyLeftToRight; }
 .ambient-butterfly.from-right { animation-name: flyRightToLeft; left: auto; right: -50px; }
