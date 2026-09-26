@@ -143,15 +143,25 @@ router.get('/users/:id', authenticate, (req, res) => {
   res.json(publicProfile(user));
 });
 
-router.get('/ice-servers', authenticate, (req, res) => {
+router.get('/ice-servers', authenticate, async (req, res) => {
   const iceServers = [{ urls: 'stun:stun.l.google.com:19302' }];
-  if (process.env.TURN_URL) {
+
+  if (process.env.METERED_APP_NAME && process.env.METERED_API_KEY) {
+    try {
+      const r = await fetch(
+        `https://${process.env.METERED_APP_NAME}.metered.live/api/v1/turn/credentials?apiKey=${process.env.METERED_API_KEY}`
+      );
+      const meteredServers = await r.json();
+      if (Array.isArray(meteredServers)) iceServers.push(...meteredServers);
+    } catch { /* fall back to STUN only */ }
+  } else if (process.env.TURN_URL) {
     iceServers.push({
       urls: process.env.TURN_URL,
       username: process.env.TURN_USERNAME,
       credential: process.env.TURN_CREDENTIAL,
     });
   }
+
   res.json(iceServers);
 });
 
