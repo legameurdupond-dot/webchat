@@ -90,11 +90,14 @@
       <span id="replyPreviewText"></span>
       <button id="cancelReply">✕</button>
     </div>
+    <div class="attachment-preview hidden" id="attachmentPreview"></div>
     <div class="message-input-bar">
+      <button id="attachBtn" class="icon-btn attach-btn" title="Joindre un fichier">📎</button>
       <textarea id="messageInput" placeholder="Écrire un message..." rows="1"></textarea>
       <button id="sendBtn" class="send-btn">➤</button>
     </div>
   </div>
+  <input type="file" id="attachmentInput" class="hidden" />
 
   <div class="members-panel">
     <div class="group-label" id="onlineLabel">En ligne</div>

@@ -58,14 +58,16 @@ function setupSockets(io) {
       socket.leave(`channel:${channelId}`);
     });
 
-    socket.on('message:send', ({ channelId, content, replyToId }) => {
+    socket.on('message:send', ({ channelId, content, replyToId, attachment }) => {
       const text = (content || '').toString().trim().slice(0, 4000);
-      if (!text || !channelId) return;
+      const att = attachment && typeof attachment.url === 'string' ? attachment : null;
+      if ((!text && !att) || !channelId) return;
       const id = crypto.randomUUID();
       const now = Date.now();
       db.prepare(
-        'INSERT INTO messages (id, channel_id, user_id, content, reply_to_id, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-      ).run(id, channelId, userId, text, replyToId || null, now);
+        `INSERT INTO messages (id, channel_id, user_id, content, reply_to_id, created_at, attachment_url, attachment_name, attachment_type, attachment_size)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(id, channelId, userId, text, replyToId || null, now, att?.url || null, att?.name || null, att?.type || null, att?.size || null);
 
       io.to(`channel:${channelId}`).emit('message:new', {
         id,
@@ -76,6 +78,7 @@ function setupSockets(io) {
         createdAt: now,
         author: { id: user.id, username: user.username, avatarColor: user.avatar_color, avatarUrl: user.avatar_url || null },
         reactions: [],
+        attachment: att ? { url: att.url, name: att.name, type: att.type, size: att.size } : null,
       });
     });
 

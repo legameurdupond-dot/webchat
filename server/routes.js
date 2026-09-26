@@ -10,12 +10,12 @@ const { signToken, authenticate, pickAvatarColor } = require('./auth');
 const router = express.Router();
 
 const uploadsDir = path.join(__dirname, '..', 'uploads');
-for (const sub of ['avatars', 'banners']) {
+for (const sub of ['avatars', 'banners', 'attachments']) {
   const dir = path.join(uploadsDir, sub);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
-function makeUploader(subdir) {
+function makeUploader(subdir, { fileFilter, maxSize } = {}) {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, path.join(uploadsDir, subdir)),
     filename: (req, file, cb) => {
@@ -25,12 +25,21 @@ function makeUploader(subdir) {
   });
   return multer({
     storage,
-    limits: { fileSize: 8 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => cb(null, /^image\/(png|jpe?g|gif|webp)$/.test(file.mimetype)),
+    limits: { fileSize: maxSize || 8 * 1024 * 1024 },
+    fileFilter: fileFilter || ((req, file, cb) => cb(null, /^image\/(png|jpe?g|gif|webp)$/.test(file.mimetype))),
   });
 }
 const uploadAvatar = makeUploader('avatars');
 const uploadBanner = makeUploader('banners');
+
+const BLOCKED_EXTENSIONS = new Set([
+  '.exe', '.msi', '.bat', '.cmd', '.sh', '.ps1', '.scr', '.com', '.pif',
+  '.jar', '.vbs', '.js', '.wsf', '.dll', '.app', '.apk',
+]);
+const uploadAttachment = makeUploader('attachments', {
+  maxSize: 20 * 1024 * 1024,
+  fileFilter: (req, file, cb) => cb(null, !BLOCKED_EXTENSIONS.has(path.extname(file.originalname).toLowerCase())),
+});
 
 function publicUser(u) {
   return {
@@ -111,6 +120,19 @@ router.post('/me/avatar', authenticate, uploadAvatar.single('file'), (req, res) 
 router.post('/me/banner', authenticate, uploadBanner.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Image invalide' });
   res.json({ url: `/uploads/banners/${req.file.filename}` });
+});
+
+router.post('/messages/attachment', authenticate, (req, res) => {
+  uploadAttachment.single('file')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message === 'File too large' ? 'Fichier trop volumineux (max 20 Mo)' : 'Fichier refusé' });
+    if (!req.file) return res.status(400).json({ error: 'Type de fichier non autorisé' });
+    res.json({
+      url: `/uploads/attachments/${req.file.filename}`,
+      name: req.file.originalname,
+      type: req.file.mimetype,
+      size: req.file.size,
+    });
+  });
 });
 
 router.get('/giphy/search', authenticate, async (req, res) => {
@@ -228,6 +250,9 @@ router.get('/channels/:id/messages', authenticate, (req, res) => {
     createdAt: m.created_at,
     author: { id: m.user_id, username: m.username, avatarColor: m.avatar_color, avatarUrl: m.avatar_url || null },
     reactions: reactions.filter((r) => r.message_id === m.id).map((r) => ({ emoji: r.emoji, userId: r.user_id })),
+    attachment: m.attachment_url
+      ? { url: m.attachment_url, name: m.attachment_name, type: m.attachment_type, size: m.attachment_size }
+      : null,
   }));
 
   res.json(withReactions);

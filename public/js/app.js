@@ -15,7 +15,15 @@ const state = {
   replyTo: null,
   typingUsers: new Map(), // userId -> username
   typingTimeout: null,
+  pendingAttachment: null,
 };
+
+function formatFileSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
 
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -233,6 +241,38 @@ function scrollToBottom() {
   c.scrollTop = c.scrollHeight;
 }
 
+function fileIconFor(type, name) {
+  if (type?.startsWith('video/')) return '🎬';
+  if (type?.startsWith('audio/')) return '🎵';
+  if (type === 'application/pdf') return '📕';
+  if (/\.(zip|rar|7z)$/i.test(name || '')) return '🗜️';
+  return '📄';
+}
+
+function renderAttachment(att) {
+  const wrap = el('div', 'message-attachment');
+  if (att.type?.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = att.url;
+    img.alt = att.name || 'image';
+    img.addEventListener('click', () => window.open(att.url, '_blank'));
+    wrap.appendChild(img);
+  } else {
+    const link = document.createElement('a');
+    link.className = 'file-attachment';
+    link.href = att.url;
+    link.target = '_blank';
+    link.download = att.name || '';
+    link.appendChild(el('span', 'file-icon', fileIconFor(att.type, att.name)));
+    const info = el('div', 'att-info');
+    info.appendChild(el('div', 'att-name', att.name || 'Fichier'));
+    info.appendChild(el('div', 'att-size', formatFileSize(att.size)));
+    link.appendChild(info);
+    wrap.appendChild(link);
+  }
+  return wrap;
+}
+
 function renderMessage(m) {
   const row = el('div', 'message-row');
   row.dataset.id = m.id;
@@ -262,6 +302,8 @@ function renderMessage(m) {
   content.textContent = m.content;
   if (m.editedAt) content.appendChild(el('span', 'edited-tag', '(modifié)'));
   body.appendChild(content);
+
+  if (m.attachment) body.appendChild(renderAttachment(m.attachment));
 
   const reactionsRow = el('div', 'reactions-row');
   reactionsRow.dataset.role = 'reactions';
@@ -387,15 +429,77 @@ $('#sendBtn').addEventListener('click', sendMessage);
 
 function sendMessage() {
   const text = input.value.trim();
-  if (!text || !state.currentChannel) return;
-  state.socket.emit('message:send', { channelId: state.currentChannel.id, content: text, replyToId: state.replyTo });
+  if ((!text && !state.pendingAttachment) || !state.currentChannel) return;
+  state.socket.emit('message:send', {
+    channelId: state.currentChannel.id,
+    content: text,
+    replyToId: state.replyTo,
+    attachment: state.pendingAttachment,
+  });
   input.value = '';
   input.style.height = 'auto';
   state.replyTo = null;
   $('#replyPreview').classList.add('hidden');
+  clearAttachment();
   clearTimeout(state.typingTimeout);
   state.socket.emit('typing:stop', { channelId: state.currentChannel.id });
 }
+
+/* ---------------- Attachments ---------------- */
+
+function clearAttachment() {
+  state.pendingAttachment = null;
+  $('#attachmentPreview').classList.add('hidden');
+  $('#attachmentPreview').innerHTML = '';
+}
+
+function renderAttachmentPreview() {
+  const att = state.pendingAttachment;
+  const box = $('#attachmentPreview');
+  box.innerHTML = '';
+  if (!att) { box.classList.add('hidden'); return; }
+  if (att.type?.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = att.url;
+    box.appendChild(img);
+  } else {
+    box.appendChild(el('span', 'file-icon', fileIconFor(att.type, att.name)));
+  }
+  const info = el('div', 'att-info');
+  info.appendChild(el('div', 'att-name', att.name || 'Fichier'));
+  info.appendChild(el('div', 'att-size', formatFileSize(att.size)));
+  box.appendChild(info);
+  const removeBtn = el('button', null, '✕');
+  removeBtn.addEventListener('click', clearAttachment);
+  box.appendChild(removeBtn);
+  box.classList.remove('hidden');
+}
+
+$('#attachBtn').addEventListener('click', () => $('#attachmentInput').click());
+$('#attachmentInput').addEventListener('change', async () => {
+  const file = $('#attachmentInput').files[0];
+  $('#attachmentInput').value = '';
+  if (!file) return;
+
+  const attachBtn = $('#attachBtn');
+  attachBtn.classList.add('uploading');
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch('/api/messages/attachment', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + state.token },
+      body: form,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { alert(data.error || 'Import impossible'); return; }
+    state.pendingAttachment = data;
+    renderAttachmentPreview();
+    $('#messageInput').focus();
+  } finally {
+    attachBtn.classList.remove('uploading');
+  }
+});
 
 /* ---------------- Members / presence ---------------- */
 

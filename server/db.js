@@ -65,6 +65,9 @@ db.exec(`
 for (const col of ['avatar_url TEXT', 'banner_url TEXT']) {
   try { db.exec(`ALTER TABLE users ADD COLUMN ${col}`); } catch { /* column already exists */ }
 }
+for (const col of ['attachment_url TEXT', 'attachment_name TEXT', 'attachment_type TEXT', 'attachment_size INTEGER']) {
+  try { db.exec(`ALTER TABLE messages ADD COLUMN ${col}`); } catch { /* column already exists */ }
+}
 
 // Seed a default server/channels on first run
 const serverCount = db.prepare('SELECT COUNT(*) AS c FROM servers').get().c;
