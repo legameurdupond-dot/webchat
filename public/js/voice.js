@@ -105,6 +105,18 @@ const Voice = (() => {
       if (p) { p.username = username; p.avatarColor = avatarColor; p.avatarUrl = avatarUrl; renderCallBar(); }
     });
 
+    socket.on('connect', () => {
+      // The transport reconnected (network blip, host waking up, etc). The server
+      // already dropped our previous voice session on disconnect, so any peer
+      // connections we still hold are stale — tear them down and rejoin fresh so
+      // everyone renegotiates instead of talking to a half-closed connection.
+      if (currentChannelId) {
+        for (const uid of [...peers.keys()]) closePeer(uid);
+        participants.clear();
+        socket.emit('voice:join', currentChannelId);
+      }
+    });
+
     wireButtons();
   }
 
@@ -144,7 +156,12 @@ const Voice = (() => {
       refreshVideoTile(remoteUserId);
     };
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'failed' || pc.connectionState === 'closed') closePeer(remoteUserId);
+      if (pc.connectionState === 'failed') {
+        try { pc.restartIce(); } catch { /* not supported, fall through to the timeout below */ }
+        setTimeout(() => { if (pc.connectionState === 'failed') closePeer(remoteUserId); }, 8000);
+      } else if (pc.connectionState === 'closed') {
+        closePeer(remoteUserId);
+      }
     };
 
     addLocalTracksToPeer(pc);
